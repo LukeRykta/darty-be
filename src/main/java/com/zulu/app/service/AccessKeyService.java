@@ -25,11 +25,7 @@ public class AccessKeyService {
     // admin only
     public void storeNewPassphrase(String passphrase) {
         String hash = BCrypt.hashpw(passphrase, BCrypt.gensalt());
-        repository.deleteAll(); // Optional: only allow one valid key at a time
+        repository.deleteAll(); // only allow one valid key at a time
         repository.save(new AccessKey(hash));
-    }
-
-    public void deleteAllPassphrases() {
-        repository.deleteAll();
     }
 }

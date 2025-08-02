@@ -15,13 +15,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/access/init", "/api/access/update", "/api/access/delete") // protect these endpoints
-                        .authenticated()
-                        .anyRequest().permitAll() // public access for everything else
-                )
-                .httpBasic(withDefaults()); // enables basic auth
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/access/init","/api/access/update", "/api/access/delete") // protect these endpoints
+                .authenticated()
+                .anyRequest().permitAll() // public access for everything else
+            )
+            .httpBasic(withDefaults()); // enables basic auth
 
         return http.build();
     }
