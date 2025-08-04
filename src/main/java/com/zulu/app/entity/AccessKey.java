@@ -14,11 +14,11 @@ public class AccessKey {
 
         private String description;
 
-        @Getter
-        private String hashedPassphrase;
+        private String passphrase;
 
-        public AccessKey(String hashedPassphrase) {
-                this.hashedPassphrase = hashedPassphrase;
+        public AccessKey(String passphrase, String description) {
+                this.passphrase = passphrase;
+                this.description = description;
         }
 
 }

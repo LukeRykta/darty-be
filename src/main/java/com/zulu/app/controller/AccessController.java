@@ -1,5 +1,6 @@
 package com.zulu.app.controller;
 
+import com.zulu.app.dto.PassphraseRequest;
 import com.zulu.app.service.AccessKeyService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ public class AccessController {
         this.service = service;
     }
 
+    // checks passphrase is valid
     @PostMapping("/validate")
     public boolean validatePassphrase(@RequestBody String passphrase) {
         log.info("Validating passphrase request");
@@ -24,19 +26,29 @@ public class AccessController {
         return service.isValidPassphrase(passphrase.trim());
     }
 
-    @PostMapping("/init")
-    public ResponseEntity<String> initialize(@RequestBody String newPassphrase) {
-        log.info("Storing new passphrase");
 
-        service.storeNewPassphrase(newPassphrase.trim());
-        return ResponseEntity.ok("New passphrase saved");
+    @GetMapping("/read")
+    public ResponseEntity<PassphraseRequest> readPassphrase() {
+        PassphraseRequest key = service.getExistingPassphrase();
+        if (key == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(key);
     }
 
-    @PutMapping("/update") // Update existing passphrase
-    public ResponseEntity<String> update(@RequestBody String newPassphrase) {
-        log.info("Update new passphrase");
-        service.storeNewPassphrase(newPassphrase.trim());
-        return ResponseEntity.ok("Passphrase updated");
+
+    // creates or updates new passphrase
+    @PostMapping("/init")
+    public ResponseEntity<String> createPassphrase(@RequestBody PassphraseRequest request) {
+        log.info("Updating passphrase");
+
+        service.storeNewPassphrase(
+                request.getPassphrase().trim(),
+                request.getDescription().trim()
+        );
+
+        return ResponseEntity.ok("New passphrase saved");
     }
 
 }

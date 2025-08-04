@@ -17,7 +17,11 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/access/init","/api/access/update", "/api/access/delete") // protect these endpoints
+                .requestMatchers(
+                        "/api/access/init",
+                        "/api/access/delete",
+                        "/api/access/read"
+                ) // protect these endpoints
                 .authenticated()
                 .anyRequest().permitAll() // public access for everything else
             )
