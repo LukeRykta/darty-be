@@ -1,5 +1,6 @@
 package com.zulu.app.service;
 
+import com.zulu.app.dto.PassphraseRequest;
 import com.zulu.app.entity.AccessKey;
 import com.zulu.app.repository.AccessKeyRepository;
 import org.springframework.stereotype.Service;
@@ -19,13 +20,24 @@ public class AccessKeyService {
         if (key == null) {
             return false;
         }
-        return BCrypt.checkpw(input, key.getHashedPassphrase());
+        return BCrypt.checkpw(input, key.getPassphrase());
     }
 
     // admin only
-    public void storeNewPassphrase(String passphrase) {
+    public void storeNewPassphrase(String passphrase, String description) {
         String hash = BCrypt.hashpw(passphrase, BCrypt.gensalt());
         repository.deleteAll(); // only allow one valid key at a time
-        repository.save(new AccessKey(hash));
+        repository.save(new AccessKey(hash, description));
+    }
+
+    public PassphraseRequest getExistingPassphrase() {
+        return repository.findAll()
+                .stream()
+                .findFirst()
+                .map(key -> new PassphraseRequest(
+                        key.getPassphrase(),
+                        key.getDescription()
+                ))
+                .orElse(null); // Or throw custom NotFoundException
     }
 }
