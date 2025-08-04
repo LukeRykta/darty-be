@@ -3,31 +3,38 @@ package com.zulu.app.service;
 import com.zulu.app.dto.PassphraseRequest;
 import com.zulu.app.entity.AccessKey;
 import com.zulu.app.repository.AccessKeyRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 
 @Service
+@RequiredArgsConstructor
 public class AccessKeyService {
 
     private final AccessKeyRepository repository;
 
-    public AccessKeyService(AccessKeyRepository repository) {
-        this.repository = repository;
-    }
+    private final EncryptionService encryptionService;
 
     public boolean isValidPassphrase(String input) {
-        AccessKey key = repository.findAll().stream().findFirst().orElse(null);
-        if (key == null) {
-            return false;
-        }
-        return BCrypt.checkpw(input, key.getPassphrase());
+        return repository.findAll()
+                .stream()
+                .findFirst()
+                .map(stored -> {
+                    String decrypted = encryptionService.decrypt(stored.getPassphrase());
+                    return decrypted.equals(input.trim());
+                })
+                .orElse(false);
     }
 
     // admin only
     public void storeNewPassphrase(String passphrase, String description) {
-        String hash = BCrypt.hashpw(passphrase, BCrypt.gensalt());
-        repository.deleteAll(); // only allow one valid key at a time
-        repository.save(new AccessKey(hash, description));
+        AccessKey key = new AccessKey(passphrase, description);
+        key.setPassphrase(encryptionService.encrypt(passphrase));
+        key.setDescription(description);
+        repository.save(key);
+    }
+
+    public void nukePassphrase() {
+        repository.deleteAll();
     }
 
     public PassphraseRequest getExistingPassphrase() {
@@ -35,9 +42,9 @@ public class AccessKeyService {
                 .stream()
                 .findFirst()
                 .map(key -> new PassphraseRequest(
-                        key.getPassphrase(),
-                        key.getDescription()
-                ))
-                .orElse(null); // Or throw custom NotFoundException
+                        encryptionService.decrypt(key.getPassphrase()),
+                        key.getDescription()))
+                .orElse(null);
     }
+
 }
