@@ -19,7 +19,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                         "/api/access/init",
-                        "/api/access/delete",
+                        "/api/access/nuke",
                         "/api/access/read"
                 ) // protect these endpoints
                 .authenticated()

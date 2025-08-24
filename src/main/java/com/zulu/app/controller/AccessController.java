@@ -3,6 +3,7 @@ package com.zulu.app.controller;
 import com.zulu.app.dto.PassphraseRequest;
 import com.zulu.app.service.AccessKeyService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,35 +21,46 @@ public class AccessController {
 
     // checks passphrase is valid
     @PostMapping("/validate")
-    public boolean validatePassphrase(@RequestBody String passphrase) {
-        log.info("Validating passphrase request");
+    public ResponseEntity<String> validatePassphrase(@RequestBody PassphraseRequest input) {
+        log.info("Validating passphrase input");
 
-        return service.isValidPassphrase(passphrase.trim());
-    }
+        boolean valid = service.isValidPassphrase(input.getPassphrase());
 
-
-    @GetMapping("/read")
-    public ResponseEntity<PassphraseRequest> readPassphrase() {
-        PassphraseRequest key = service.getExistingPassphrase();
-        if (key == null) {
-            return ResponseEntity.notFound().build();
+        if (valid) {
+            return ResponseEntity.ok("Passphrase match");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid passphrase");
         }
+    }
 
-        return ResponseEntity.ok(key);
+    // removes existing password
+    @DeleteMapping("/nuke")
+    public ResponseEntity<Void> nukePassphrase() {
+        log.info("Boom");
+
+        service.nukePassphrase();
+        return ResponseEntity.noContent().build();
+    }
+
+    // admin only
+    @GetMapping("/read")
+    public ResponseEntity<PassphraseRequest> readKey() {
+        log.info("Reading decrypted passphrase");
+        PassphraseRequest response = service.getExistingPassphrase();
+        return (response != null) ? ResponseEntity.ok(response) : ResponseEntity.notFound().build();
     }
 
 
-    // creates or updates new passphrase
     @PostMapping("/init")
-    public ResponseEntity<String> createPassphrase(@RequestBody PassphraseRequest request) {
-        log.info("Updating passphrase");
+    public ResponseEntity<String> createKey(@RequestBody PassphraseRequest request) {
+        log.info("Storing new passphrase");
 
         service.storeNewPassphrase(
-                request.getPassphrase().trim(),
-                request.getDescription().trim()
+                request.getPassphrase(),
+                request.getDescription()
         );
 
-        return ResponseEntity.ok("New passphrase saved");
+        return ResponseEntity.ok("Passphrase updated");
     }
 
 }
